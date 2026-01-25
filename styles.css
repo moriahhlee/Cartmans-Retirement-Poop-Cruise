@@ -1,0 +1,180 @@
+:root{
+  --page-bg: #f4f6f8;
+  --page-fg: #111111;
+
+  --card: #ffffff;
+  --muted: #667085;
+
+  --shadow: 0 10px 30px rgba(0,0,0,0.10);
+  --shadow-hi: 0 16px 45px rgba(0,0,0,0.14);
+  --radius: 22px;
+}
+
+*{ box-sizing: border-box; }
+html, body { height: 100%; }
+
+body{
+  margin: 0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  background: var(--page-bg);
+  color: var(--page-fg);
+  transition: background-color 260ms ease, color 260ms ease;
+}
+
+.topbar{
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: rgba(244,246,248,0.88);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(17,17,17,0.06);
+}
+
+.topbar-inner{
+  padding: 16px 18px 12px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.title{
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 850;
+}
+
+.subtitle{
+  margin: 6px 0 0;
+  color: rgba(17,17,17,0.55);
+  font-size: 0.95rem;
+}
+
+.page{
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 18px 0 34px;
+}
+
+/* Horizontal rail: peek + end-centering via spacers */
+.rail{
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: min(86vw, 440px); /* controls how much “peek” you see */
+  gap: 14px;
+
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+
+  padding: 12px 0 22px;
+
+  /* prevents weird elastic overscroll */
+  overscroll-behavior-x: contain;
+
+  scrollbar-width: none;
+}
+.rail::-webkit-scrollbar{ display:none; }
+
+/* Spacer allows first/last card to center */
+.rail-spacer{
+  width: 50vw;
+  height: 1px;
+  scroll-snap-align: none;
+}
+
+/* Card styling (JS drives scale/opacity) */
+.card{
+  scroll-snap-align: center;
+
+  background: var(--card);
+  border-radius: var(--radius);
+  overflow: hidden;
+
+  box-shadow: var(--shadow);
+
+  /* JS will override these every frame */
+  transform: scale(0.92);
+  opacity: 0.86;
+
+  /* easing here makes it feel “stuck” to the snap */
+  transition: transform 160ms ease-out, opacity 160ms ease-out, box-shadow 180ms ease;
+  will-change: transform, opacity;
+  outline: none;
+}
+
+.card:focus-visible{
+  box-shadow: 0 0 0 3px rgba(0,0,0,0.18), var(--shadow);
+}
+
+@media (hover:hover){
+  .card:hover{
+    box-shadow: var(--shadow-hi);
+  }
+}
+
+.card-media{
+  position: relative;
+  height: min(55vh, 360px);
+  background: #ddd;
+}
+
+.card-media img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.badge{
+  position: absolute;
+  left: 14px;
+  top: 14px;
+  padding: 8px 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.92);
+  font-weight: 750;
+  font-size: 0.85rem;
+}
+
+.card-body{
+  padding: 14px 16px 16px;
+}
+
+.card-title{
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 900;
+}
+
+.card-meta{
+  margin: 6px 0 12px;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.card-row{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.price{
+  font-weight: 900;
+}
+
+.pill{
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: rgba(17,17,17,0.06);
+  color: rgba(17,17,17,0.78);
+  font-weight: 650;
+  font-size: 0.85rem;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce){
+  body{ transition: none; }
+  .rail{ scroll-behavior: auto; }
+  .card{ transition: none; }
+}
