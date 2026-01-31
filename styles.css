@@ -183,3 +183,288 @@ body{
   cursor: pointer;
 }
 
+/* --- BELOW THE RAIL: stacked sections --- */
+
+.content{
+  padding: 6px 0 40px;
+}
+
+/* You already use this in HTML but it didn't exist yet */
+.card-subtitle{
+  margin: 6px 0 10px;
+  color: rgba(17,17,17,0.72);
+  font-size: 0.95rem;
+  font-weight: 650;
+}
+
+.panel{
+  border-radius: 26px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  margin: 18px 0;
+  border: 1px solid rgba(17,17,17,0.08);
+}
+
+.panel-intro{
+  background: #d9ff57; /* lime from your mockup vibe */
+}
+
+.panel-grid{
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 18px;
+  padding: 26px;
+  align-items: center;
+}
+
+.panel-title{
+  margin: 0 0 10px;
+  font-size: 2.1rem;
+  letter-spacing: -0.02em;
+  font-weight: 950;
+}
+
+.panel-subtitle{
+  margin: 0 0 14px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  font-style: italic;
+}
+
+.panel-text p{
+  margin: 10px 0;
+  max-width: 62ch;
+  color: rgba(17,17,17,0.82);
+  line-height: 1.45;
+}
+
+.panel-media{
+  border-radius: 22px;
+  overflow: hidden;
+  background: rgba(17,17,17,0.10);
+  aspect-ratio: 4 / 3;
+}
+
+.panel-media img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Two-up layout */
+.two-up{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 18px 0 28px;
+}
+
+.tile{
+  border-radius: 26px;
+  box-shadow: var(--shadow);
+  border: 1px solid rgba(17,17,17,0.08);
+  overflow: hidden;
+  background: rgba(255,255,255,0.75);
+}
+
+.tile-big{
+  min-height: 360px;
+  background: #62e3ee; /* blue tile */
+  position: relative;
+}
+
+.tile-inner{
+  padding: 22px;
+}
+
+.tile-title{
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 950;
+}
+
+.tile-note{
+  margin: 8px 0 0;
+  color: rgba(17,17,17,0.72);
+  font-weight: 650;
+}
+
+.tile-itinerary{
+  background: #d6a8ff; /* purple tile */
+  padding: 18px;
+}
+
+.tile-header{
+  padding: 6px 6px 12px;
+}
+
+.itinerary-list{
+  display: grid;
+  gap: 10px;
+  padding: 6px;
+}
+
+.it-row{
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  align-items: center;
+
+  background: rgba(255,255,255,0.70);
+  border: 1px solid rgba(17,17,17,0.10);
+  border-radius: 18px;
+  padding: 10px 12px;
+
+  cursor: pointer;
+  transition: transform 140ms ease, box-shadow 160ms ease;
+}
+
+@media (hover:hover){
+  .it-row:hover{
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-hi);
+  }
+}
+
+.it-day{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(217,255,87,0.92); /* lime pills */
+  font-weight: 950;
+  letter-spacing: 0.02em;
+  border: 1px solid rgba(17,17,17,0.14);
+  white-space: nowrap;
+}
+
+.it-stop{
+  font-weight: 850;
+}
+
+.it-sub{
+  margin-top: 2px;
+  color: rgba(17,17,17,0.70);
+  font-weight: 650;
+  font-size: 0.92rem;
+}
+
+.itinerary-detail{
+  margin: 12px 6px 6px;
+  background: rgba(255,255,255,0.84);
+  border: 1px solid rgba(17,17,17,0.10);
+  border-radius: 18px;
+  padding: 12px 12px 14px;
+}
+
+.itinerary-detail-header{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(17,17,17,0.10);
+}
+
+.itinerary-detail-title{
+  margin: 0;
+  font-weight: 950;
+}
+
+.btn-close{
+  border: 1px solid rgba(17,17,17,0.18);
+  background: rgba(17,17,17,0.06);
+  border-radius: 999px;
+  padding: 8px 10px;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.itinerary-detail-body{
+  padding-top: 10px;
+  color: rgba(17,17,17,0.80);
+  line-height: 1.45;
+}
+
+/* Track record */
+.track{
+  margin: 26px 0 18px;
+  border-radius: 26px;
+  overflow: hidden;
+  border: 1px solid rgba(17,17,17,0.08);
+  box-shadow: var(--shadow);
+
+  /* Image background feel like your mockup */
+  background-image: url("images/mint.jpg");
+  background-size: cover;
+  background-position: center;
+}
+
+.track-inner{
+  padding: 26px;
+  background: linear-gradient(
+    to bottom,
+    rgba(244,246,248,0.86),
+    rgba(244,246,248,0.72)
+  );
+}
+
+.track-title{
+  margin: 0 0 16px;
+  font-size: 2.0rem;
+  font-weight: 950;
+  letter-spacing: -0.02em;
+}
+
+.testimonials{
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.quote{
+  border-radius: 22px;
+  padding: 16px 16px 14px;
+  background: rgba(217,255,87,0.92);
+  border: 1px solid rgba(17,17,17,0.10);
+  box-shadow: var(--shadow);
+}
+
+.stars{
+  font-weight: 950;
+  letter-spacing: 0.12em;
+  margin-bottom: 8px;
+}
+
+.quote p{
+  margin: 10px 0;
+  color: rgba(17,17,17,0.84);
+}
+
+.quote-name{
+  margin-top: 12px;
+  font-weight: 950;
+}
+
+.footer{
+  padding: 18px 8px 6px;
+  text-align: center;
+  color: rgba(17,17,17,0.60);
+  font-weight: 650;
+}
+
+/* Responsive */
+@media (max-width: 900px){
+  .panel-grid{
+    grid-template-columns: 1fr;
+  }
+  .two-up{
+    grid-template-columns: 1fr;
+  }
+  .testimonials{
+    grid-template-columns: 1fr;
+  }
+}
+
