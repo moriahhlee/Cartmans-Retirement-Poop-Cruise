@@ -231,3 +231,81 @@ cards.forEach((card) => {
 // Initial render
 requestUpdate();
 
+/* --- Itinerary widget (below the rail) --- */
+
+const itineraryData = [
+  { day: "Day 1", icon: "⚓", title: "Port Miami", detail: "Arrival day. Boarding, sail-away, and your first round of questionable decisions." },
+  { day: "Day 2", icon: "🏝️", title: "Freeport, Grand Bahama", detail: "Beach day. Optional: snorkeling. Also optional: pretending we will all meet on time." },
+  { day: "Day 3", icon: "🌊", title: "At Sea", detail: "Pool, shows, food. Repeat until you become a cruise person." },
+  { day: "Day 4", icon: "🏙️", title: "San Juan, Puerto Rico", detail: "Old San Juan wandering, forts, coffee, and sun." },
+  { day: "Day 5", icon: "🏖️", title: "St. Thomas, USVI", detail: "Water. Sand. Somewhere in here we lose someone’s sunglasses." },
+  { day: "Day 6", icon: "🌊", title: "At Sea", detail: "Recovery day. Hydrate. Consider vegetables." },
+  { day: "Day 7", icon: "🌊", title: "At Sea", detail: "Final full day. Everyone suddenly gets sentimental." },
+  { day: "Day 8", icon: "⚓", title: "Port Miami", detail: "Disembark. We pretend we are rested." },
+];
+
+function renderItinerary() {
+  const list = document.getElementById("itineraryList");
+  const detail = document.getElementById("itineraryDetail");
+  const detailTitle = document.getElementById("itineraryDetailTitle");
+  const detailBody = document.getElementById("itineraryDetailBody");
+  const closeBtn = document.getElementById("itineraryClose");
+
+  if (!list || !detail || !detailTitle || !detailBody || !closeBtn) return;
+
+  list.innerHTML = "";
+
+  itineraryData.forEach((item, idx) => {
+    const row = document.createElement("div");
+    row.className = "it-row";
+    row.tabIndex = 0;
+    row.setAttribute("role", "button");
+    row.setAttribute("aria-label", `${item.day}: ${item.title}`);
+
+    row.innerHTML = `
+      <div class="it-day">${item.icon} ${item.day}</div>
+      <div>
+        <div class="it-stop">${item.title}</div>
+        <div class="it-sub">Tap for details</div>
+      </div>
+    `;
+
+    const open = () => {
+      detailTitle.textContent = `${item.day}: ${item.title}`;
+      detailBody.textContent = item.detail;
+      detail.hidden = false;
+      closeBtn.focus();
+    };
+
+    row.addEventListener("click", open);
+    row.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        open();
+      }
+    });
+
+    list.appendChild(row);
+  });
+
+  closeBtn.addEventListener("click", () => {
+    detail.hidden = true;
+  });
+}
+
+renderItinerary();
+
+const content = document.querySelector(".content");
+if (content) {
+  const obs = new IntersectionObserver(([entry]) => {
+    if (entry.isIntersecting) {
+      // When the user is looking at the content area, return to a calm base bg.
+      document.documentElement.style.setProperty("--page-bg", "#f4f6f8");
+      document.documentElement.style.setProperty("--page-fg", "#111111");
+    }
+  }, { threshold: 0.05 });
+
+  obs.observe(content);
+}
+
+
