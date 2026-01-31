@@ -208,12 +208,15 @@ window.addEventListener("resize", () => {
   requestUpdate();
 });
 
-// Click/keyboard stub (replace later)
+// click card script
 cards.forEach((card) => {
   const open = () => {
-    const title = card.querySelector(".card-title")?.textContent?.trim() || "Cruise";
-    alert(`Open details for: ${title}`);
-  };
+  const url = card.dataset.link;
+  if (!url) return;
+
+  window.open(url, "_blank", "noopener");
+};
+
 
   card.addEventListener("click", open);
 
@@ -227,3 +230,4 @@ cards.forEach((card) => {
 
 // Initial render
 requestUpdate();
+
