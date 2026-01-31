@@ -178,3 +178,8 @@ body{
   .rail{ scroll-behavior: auto; }
   .card{ transition: none; }
 }
+
+.card{
+  cursor: pointer;
+}
+
