@@ -213,22 +213,74 @@ window.addEventListener("resize", () => {
   requestUpdate();
 });
 
-// click card script
-cards.forEach((card) => {
-  const open = () => {
+// click card script (single click = center + scroll to itinerary, double click = open link)
+
+function centerCard(card) {
+  const railRect = rail.getBoundingClientRect();
+  const cardRect = card.getBoundingClientRect();
+
+  const railCenterX = railRect.left + railRect.width / 2;
+  const cardCenterX = cardRect.left + cardRect.width / 2;
+
+  const deltaPx = cardCenterX - railCenterX;
+  const targetLeft = rail.scrollLeft + deltaPx;
+
+  animateScrollTo(targetLeft, 340);
+}
+
+function scrollToItinerary() {
+  const itinerary = document.getElementById("itinerary");
+  if (!itinerary) return;
+
+  itinerary.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function openCardLink(card) {
   const url = card.dataset.link;
   if (!url) return;
-
   window.open(url, "_blank", "noopener");
-};
+}
 
+cards.forEach((card) => {
+  let clickTimer = null;
+  const CLICK_DELAY = 220; // ms (controls how fast single click reacts)
 
-  card.addEventListener("click", open);
+  // SINGLE click: center card + scroll down to itinerary
+  card.addEventListener("click", (e) => {
+    // If a second click comes quickly, dblclick will clear this.
+    if (clickTimer) clearTimeout(clickTimer);
 
+    clickTimer = setTimeout(() => {
+      centerCard(card);
+
+      // wait for the rail centering animation to finish, then scroll down
+      setTimeout(() => {
+        syncItineraryToCenteredCard(); // keeps itinerary aligned with centered card
+        scrollToItinerary();
+      }, 360);
+
+      clickTimer = null;
+    }, CLICK_DELAY);
+  });
+
+  // DOUBLE click: open link
+  card.addEventListener("dblclick", (e) => {
+    if (clickTimer) {
+      clearTimeout(clickTimer);
+      clickTimer = null;
+    }
+    openCardLink(card);
+  });
+
+  // Keyboard: Enter/Space behaves like single click
   card.addEventListener("keydown", (e) => {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
-      open();
+      centerCard(card);
+      setTimeout(() => {
+        syncItineraryToCenteredCard();
+        scrollToItinerary();
+      }, 360);
     }
   });
 });
@@ -334,6 +386,7 @@ if (content) {
 
   obs.observe(content);
 }
+
 
 
 
