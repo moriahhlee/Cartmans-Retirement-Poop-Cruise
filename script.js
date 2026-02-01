@@ -43,7 +43,12 @@ function animateScrollTo(targetLeft, duration = 340) {
     const eased = easeOutBack(t);
     rail.scrollLeft = startLeft + delta * eased;
 
-    if (t < 1) requestAnimationFrame(frame);
+   if (t < 1) {
+  requestAnimationFrame(frame);
+} else {
+  syncItineraryToCenteredCard();
+}
+
   }
 
   requestAnimationFrame(frame);
@@ -187,7 +192,6 @@ rail.addEventListener("wheel", () => {
 
 rail.addEventListener("scroll", () => {
   requestUpdate();
-  syncItineraryToCenteredCard();
 }, { passive: true });
 
 rail.addEventListener("pointerdown", (e) => {
@@ -231,7 +235,6 @@ cards.forEach((card) => {
 
 // Initial render
 requestUpdate();
-syncItineraryToCenteredCard();
 
 /* --- Itinerary widget (below the rail), driven by centered card --- */
 
@@ -253,8 +256,8 @@ function renderItineraryFromCard(cardEl) {
   const detailBody = document.getElementById("itineraryDetailBody");
   const closeBtn = document.getElementById("itineraryClose");
 
-  if (!list || !detail || !detailTitle || !detailBody || !closeBtn) return;
-  if (!cardEl) return;
+if (!list) return;
+if (!cardEl) return;
 
   const itinerary = safeJsonParse(cardEl.dataset.itinerary, []);
   list.innerHTML = "";
@@ -311,6 +314,14 @@ function syncItineraryToCenteredCard() {
   }
 }
 
+// Hook itinerary updates AFTER the functions exist
+rail.addEventListener("scroll", () => {
+  syncItineraryToCenteredCard();
+}, { passive: true });
+
+// Run once on load
+syncItineraryToCenteredCard();
+
 const content = document.querySelector(".content");
 if (content) {
   const obs = new IntersectionObserver(([entry]) => {
@@ -323,6 +334,7 @@ if (content) {
 
   obs.observe(content);
 }
+
 
 
 
