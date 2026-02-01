@@ -229,11 +229,15 @@ function centerCard(card) {
 }
 
 function scrollToItinerary() {
-  const itinerary = document.getElementById("itinerary");
-  if (!itinerary) return;
+  const overview = document.getElementById("overview");
+  if (!overview) return;
 
-  itinerary.scrollIntoView({ behavior: "smooth", block: "start" });
+  overview.scrollIntoView({
+    behavior: "smooth",
+    block: "start"
+  });
 }
+
 
 function openCardLink(card) {
   const url = card.dataset.link;
@@ -386,6 +390,7 @@ if (content) {
 
   obs.observe(content);
 }
+
 
 
 
