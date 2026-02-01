@@ -187,6 +187,7 @@ rail.addEventListener("wheel", () => {
 
 rail.addEventListener("scroll", () => {
   requestUpdate();
+  syncItineraryToCenteredCard();
 }, { passive: true });
 
 rail.addEventListener("pointerdown", (e) => {
@@ -230,21 +231,22 @@ cards.forEach((card) => {
 
 // Initial render
 requestUpdate();
+syncItineraryToCenteredCard();
 
-/* --- Itinerary widget (below the rail) --- */
+/* --- Itinerary widget (below the rail), driven by centered card --- */
 
-const itineraryData = [
-  { day: "Day 1", icon: "⚓", title: "Port Miami", detail: "Arrival day. Boarding, sail-away, and your first round of questionable decisions." },
-  { day: "Day 2", icon: "🏝️", title: "Freeport, Grand Bahama", detail: "Beach day. Optional: snorkeling. Also optional: pretending we will all meet on time." },
-  { day: "Day 3", icon: "🌊", title: "At Sea", detail: "Pool, shows, food. Repeat until you become a cruise person." },
-  { day: "Day 4", icon: "🏙️", title: "San Juan, Puerto Rico", detail: "Old San Juan wandering, forts, coffee, and sun." },
-  { day: "Day 5", icon: "🏖️", title: "St. Thomas, USVI", detail: "Water. Sand. Somewhere in here we lose someone’s sunglasses." },
-  { day: "Day 6", icon: "🌊", title: "At Sea", detail: "Recovery day. Hydrate. Consider vegetables." },
-  { day: "Day 7", icon: "🌊", title: "At Sea", detail: "Final full day. Everyone suddenly gets sentimental." },
-  { day: "Day 8", icon: "⚓", title: "Port Miami", detail: "Disembark. We pretend we are rested." },
-];
+let activeItineraryCard = null;
 
-function renderItinerary() {
+function safeJsonParse(str, fallback) {
+  try { return JSON.parse(str); } catch { return fallback; }
+}
+
+function getCenteredCard() {
+  const nearest = getNearestCard();
+  return nearest ? nearest.card : null;
+}
+
+function renderItineraryFromCard(cardEl) {
   const list = document.getElementById("itineraryList");
   const detail = document.getElementById("itineraryDetail");
   const detailTitle = document.getElementById("itineraryDetailTitle");
@@ -252,27 +254,29 @@ function renderItinerary() {
   const closeBtn = document.getElementById("itineraryClose");
 
   if (!list || !detail || !detailTitle || !detailBody || !closeBtn) return;
+  if (!cardEl) return;
 
+  const itinerary = safeJsonParse(cardEl.dataset.itinerary, []);
   list.innerHTML = "";
 
-  itineraryData.forEach((item, idx) => {
+  itinerary.forEach((item) => {
     const row = document.createElement("div");
     row.className = "it-row";
     row.tabIndex = 0;
     row.setAttribute("role", "button");
-    row.setAttribute("aria-label", `${item.day}: ${item.title}`);
+    row.setAttribute("aria-label", `${item.day || ""}: ${item.title || ""}`);
 
     row.innerHTML = `
-      <div class="it-day">${item.icon} ${item.day}</div>
+      <div class="it-day">${item.icon || "📍"} ${item.day || ""}</div>
       <div>
-        <div class="it-stop">${item.title}</div>
-        <div class="it-sub">Tap for details</div>
+        <div class="it-stop">${item.title || ""}</div>
+        <div class="it-sub">${item.detail || "Tap for details"}</div>
       </div>
     `;
 
     const open = () => {
-      detailTitle.textContent = `${item.day}: ${item.title}`;
-      detailBody.textContent = item.detail;
+      detailTitle.textContent = `${item.day || ""}: ${item.title || ""}`;
+      detailBody.textContent = item.detail || "";
       detail.hidden = false;
       closeBtn.focus();
     };
@@ -288,12 +292,24 @@ function renderItinerary() {
     list.appendChild(row);
   });
 
-  closeBtn.addEventListener("click", () => {
-    detail.hidden = true;
-  });
+  // Prevent stacking multiple close listeners
+  if (!closeBtn.dataset.bound) {
+    closeBtn.addEventListener("click", () => {
+      detail.hidden = true;
+    });
+    closeBtn.dataset.bound = "true";
+  }
 }
 
-renderItinerary();
+function syncItineraryToCenteredCard() {
+  const centered = getCenteredCard();
+  if (!centered) return;
+
+  if (centered !== activeItineraryCard) {
+    activeItineraryCard = centered;
+    renderItineraryFromCard(centered);
+  }
+}
 
 const content = document.querySelector(".content");
 if (content) {
@@ -307,5 +323,6 @@ if (content) {
 
   obs.observe(content);
 }
+
 
 
