@@ -291,6 +291,9 @@ cards.forEach((card) => {
 
 // Initial render
 requestUpdate();
+syncItineraryToCenteredCard();
+syncOverviewToCenteredCard();
+
 
 /* --- Itinerary widget (below the rail), driven by centered card --- */
 
@@ -298,6 +301,69 @@ let activeItineraryCard = null;
 
 function safeJsonParse(str, fallback) {
   try { return JSON.parse(str); } catch { return fallback; }
+}
+/* =========================
+   OVERVIEW PHOTO CYCLE (per centered card)
+   ========================= */
+
+let overviewTimer = null;
+let activePhotosKey = "";
+
+function stopOverviewCycle() {
+  if (overviewTimer) {
+    clearInterval(overviewTimer);
+    overviewTimer = null;
+  }
+}
+
+function startOverviewCycleFromCard(cardEl, { intervalMs = 5000, fadeMs = 320 } = {}) {
+  const img = document.getElementById("overviewFrame");
+  if (!img || !cardEl) return;
+
+  const photos = safeJsonParse(cardEl.dataset.photos, []);
+  if (!Array.isArray(photos) || photos.length === 0) {
+    stopOverviewCycle();
+    return;
+  }
+
+  const key = photos.join("|");
+  if (key === activePhotosKey) return; // already running this set
+  activePhotosKey = key;
+
+  stopOverviewCycle();
+
+  // Preload to prevent flashing
+  photos.forEach((src) => {
+    const pre = new Image();
+    pre.src = src;
+  });
+
+  let idx = 0;
+
+  const show = (i) => {
+    img.classList.add("is-fading");
+    setTimeout(() => {
+      img.src = photos[i];
+      img.classList.remove("is-fading");
+    }, fadeMs);
+  };
+
+  // Show first image immediately
+  show(0);
+
+  // Cycle if more than one
+  if (photos.length > 1) {
+    overviewTimer = setInterval(() => {
+      idx = (idx + 1) % photos.length;
+      show(idx);
+    }, intervalMs);
+  }
+}
+
+function syncOverviewToCenteredCard() {
+  const centered = getCenteredCard();
+  if (!centered) return;
+  startOverviewCycleFromCard(centered, { intervalMs: 5000, fadeMs: 320 });
 }
 
 function getCenteredCard() {
@@ -364,10 +430,11 @@ function syncItineraryToCenteredCard() {
   const centered = getCenteredCard();
   if (!centered) return;
 
-  if (centered !== activeItineraryCard) {
-    activeItineraryCard = centered;
-    renderItineraryFromCard(centered);
-  }
+ if (centered !== activeItineraryCard) {
+  activeItineraryCard = centered;
+  renderItineraryFromCard(centered);
+  syncOverviewToCenteredCard();
+}
 }
 
 // Hook itinerary updates AFTER the functions exist
@@ -376,7 +443,9 @@ rail.addEventListener("scroll", () => {
 }, { passive: true });
 
 // Run once on load
+requestUpdate();
 syncItineraryToCenteredCard();
+syncOverviewToCenteredCard();
 
 const content = document.querySelector(".content");
 if (content) {
