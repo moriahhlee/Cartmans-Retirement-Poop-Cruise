@@ -190,10 +190,6 @@ rail.addEventListener("wheel", () => {
   lastPointerType = "wheel";
 }, { passive: true });
 
-rail.addEventListener("scroll", () => {
-  requestUpdate();
-}, { passive: true });
-
 rail.addEventListener("pointerdown", (e) => {
   isPointerDown = true;
   lastPointerType = e.pointerType || "unknown";
@@ -288,12 +284,6 @@ cards.forEach((card) => {
     }
   });
 });
-
-// Initial render
-requestUpdate();
-syncItineraryToCenteredCard();
-syncOverviewToCenteredCard();
-
 
 /* --- Itinerary widget (below the rail), driven by centered card --- */
 
@@ -439,8 +429,10 @@ function syncItineraryToCenteredCard() {
 
 // Hook itinerary updates AFTER the functions exist
 rail.addEventListener("scroll", () => {
-  syncItineraryToCenteredCard();
+  requestUpdate();
+  syncItineraryToCenteredCard(); // this will also call syncOverviewToCenteredCard()
 }, { passive: true });
+
 
 // Run once on load
 requestUpdate();
@@ -459,6 +451,7 @@ if (content) {
 
   obs.observe(content);
 }
+
 
 
 
