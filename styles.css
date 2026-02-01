@@ -468,3 +468,13 @@ body{
   }
 }
 
+#overviewFrame {
+  transition: opacity 320ms ease;
+  opacity: 1;
+}
+
+#overviewFrame.is-fading {
+  opacity: 0;
+}
+
+
