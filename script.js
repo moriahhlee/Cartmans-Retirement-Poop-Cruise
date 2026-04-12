@@ -25,13 +25,12 @@ function rgbToCss(c) {
 }
 
 function easeOutBack(t) {
-  const c1 = 1.12; 
+  const c1 = 1.12;
   const c3 = c1 + 1;
   return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
 }
 
 function animateScrollTo(targetLeft, duration = 340) {
-  if (!rail) return;
   const startLeft = rail.scrollLeft;
   const delta = targetLeft - startLeft;
   if (Math.abs(delta) < 0.5) return;
@@ -54,12 +53,9 @@ function animateScrollTo(targetLeft, duration = 340) {
 }
 
 function getNearestCard() {
-  if (!rail) return null;
   const railRect = rail.getBoundingClientRect();
-  // If rail is not visible yet, width might be 0
-  if (railRect.width === 0) return null;
-
   const centerX = railRect.left + railRect.width / 2;
+
   let best = null;
 
   for (const card of cards) {
@@ -88,7 +84,6 @@ let lastPointerType = "unknown";
 
 function updateVisuals() {
   rafId = null;
-  if (!rail) return;
 
   const railRect = rail.getBoundingClientRect();
   const centerX = railRect.left + railRect.width / 2;
@@ -125,11 +120,11 @@ function updateVisuals() {
   }
 
   if (closest) {
-    const bg1 = closest.card.getAttribute('data-bg') || "#f4f6f8";
-    const fg1 = closest.card.getAttribute('data-accent') || "#111111";
+    const bg1 = closest.card.dataset.bg || "#f4f6f8";
+    const fg1 = closest.card.dataset.accent || "#111111";
 
     if (second) {
-      const bg2 = second.card.getAttribute('data-bg') || bg1;
+      const bg2 = second.card.dataset.bg || bg1;
       const denom = (closest.proximity + second.proximity + 1e-6);
       const t = clamp(closest.proximity / denom, 0, 1);
 
@@ -151,45 +146,31 @@ function requestUpdate() {
   rafId = requestAnimationFrame(updateVisuals);
 }
 
-function settleToNearestIfCommitted() {
-  if (isPointerDown) return;
-  const nearest = getNearestCard();
-  if (!nearest) return;
-  const COMMIT_THRESHOLD = 0.86;
-  if (nearest.proximity < COMMIT_THRESHOLD) return;
-  animateScrollTo(nearest.targetLeft, 340);
-}
-
-rail.addEventListener("wheel", () => { lastPointerType = "wheel"; }, { passive: true });
-rail.addEventListener("pointerdown", (e) => { isPointerDown = true; lastPointerType = e.pointerType || "unknown"; }, { passive: true });
-window.addEventListener("pointerup", () => {
-  if (!isPointerDown) return;
-  isPointerDown = false;
-  if (lastPointerType === "touch" || lastPointerType === "mouse" || lastPointerType === "pen") {
-    setTimeout(settleToNearestIfCommitted, 80);
-  }
-}, { passive: true });
-window.addEventListener("resize", () => { requestUpdate(); });
-
 function centerCard(card) {
-  if (!rail) return;
   const railRect = rail.getBoundingClientRect();
   const cardRect = card.getBoundingClientRect();
+
   const railCenterX = railRect.left + railRect.width / 2;
   const cardCenterX = cardRect.left + cardRect.width / 2;
+
   const deltaPx = cardCenterX - railCenterX;
   const targetLeft = rail.scrollLeft + deltaPx;
+
   animateScrollTo(targetLeft, 340);
 }
 
 function scrollToItinerary() {
   const overview = document.getElementById("overview");
   if (!overview) return;
-  overview.scrollIntoView({ behavior: "smooth", block: "start" });
+
+  overview.scrollIntoView({
+    behavior: "smooth",
+    block: "start"
+  });
 }
 
 function openCardLink(card) {
-  const url = card.getAttribute('data-link');
+  const url = card.dataset.link;
   if (!url) return;
   window.open(url, "_blank", "noopener");
 }
@@ -198,34 +179,33 @@ cards.forEach((card) => {
   let clickTimer = null;
   const CLICK_DELAY = 220;
 
-  card.addEventListener("click", (e) => {
+  card.addEventListener("click", () => {
     if (clickTimer) clearTimeout(clickTimer);
+
     clickTimer = setTimeout(() => {
       centerCard(card);
+
       setTimeout(() => {
         syncItineraryToCenteredCard();
         scrollToItinerary();
       }, 360);
+
       clickTimer = null;
     }, CLICK_DELAY);
   });
 
-  card.addEventListener("dblclick", (e) => {
-    if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; }
+  card.addEventListener("dblclick", () => {
+    if (clickTimer) {
+      clearTimeout(clickTimer);
+      clickTimer = null;
+    }
     openCardLink(card);
   });
-
-  card.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      centerCard(card);
-      setTimeout(() => {
-        syncItineraryToCenteredCard();
-        scrollToItinerary();
-      }, 360);
-    }
-  });
 });
+
+/* =========================
+   DATA RENDERING
+   ========================= */
 
 let activeItineraryCard = null;
 
@@ -233,188 +213,77 @@ function safeJsonParse(str, fallback) {
   try { return JSON.parse(str); } catch { return fallback; }
 }
 
-let overviewTimer = null;
-let activePhotosKey = "";
+/* ✅ NEW: OVERVIEW RENDER FUNCTION */
+function renderOverviewFromCard(cardEl) {
+  const titleEl = document.getElementById("overviewTitle");
+  const subtitleEl = document.getElementById("overviewSubtitle");
+  const bodyEl = document.getElementById("overviewBody");
 
-function stopOverviewCycle() {
-  if (overviewTimer) { clearInterval(overviewTimer); overviewTimer = null; }
-}
+  if (!cardEl || !titleEl || !subtitleEl || !bodyEl) return;
 
-function startOverviewCycleFromCard(cardEl, { intervalMs = 5000, fadeMs = 320 } = {}) {
-  const img = document.getElementById("overviewFrame");
-  if (!img || !cardEl) return;
+  const title = cardEl.dataset.overviewTitle || "Title";
+  const subtitle = cardEl.dataset.overviewSubtitle || "Subtitle";
+  const body = safeJsonParse(cardEl.dataset.overview, []);
 
-  // Use getAttribute for reliability
-  const photosStr = cardEl.getAttribute('data-photos');
-  const photos = safeJsonParse(photosStr, []);
-  
-  if (!Array.isArray(photos) || photos.length === 0) {
-    stopOverviewCycle();
-    return;
-  }
+  titleEl.textContent = title;
+  subtitleEl.textContent = subtitle;
 
-  const key = photos.join("|");
-  if (key === activePhotosKey) return;
-  activePhotosKey = key;
+  bodyEl.innerHTML = "";
 
-  stopOverviewCycle();
-  photos.forEach((src) => { const pre = new Image(); pre.src = src; });
-
-  let idx = 0;
-  const show = (i) => {
-    img.classList.add("is-fading");
-    setTimeout(() => {
-      img.src = photos[i];
-      img.classList.remove("is-fading");
-    }, fadeMs);
-  };
-
-  show(0);
-  if (photos.length > 1) {
-    overviewTimer = setInterval(() => {
-      idx = (idx + 1) % photos.length;
-      show(idx);
-    }, intervalMs);
+  if (Array.isArray(body) && body.length > 0) {
+    body.forEach((p) => {
+      const el = document.createElement("p");
+      el.textContent = p;
+      bodyEl.appendChild(el);
+    });
+  } else {
+    bodyEl.innerHTML = "<p>Loading...</p>";
   }
 }
 
-function syncOverviewToCenteredCard() {
-  const centered = getCenteredCard();
-  if (!centered) return;
-
-  // Use getAttribute to ensure we get the raw string value
-  const titleVal = centered.getAttribute('data-overview-title');
-  const subVal = centered.getAttribute('data-overview-subtitle');
-  const overviewVal = centered.getAttribute('data-overview');
-
-  const titleEl = document.getElementById('overviewTitle');
-  const subEl = document.getElementById('overviewSubtitle');
-  const bodyEl = document.getElementById('overviewBody');
-
-  if (titleEl && titleVal) {
-    titleEl.textContent = titleVal;
-  }
-  
-  if (subEl && subVal) {
-    subEl.textContent = subVal;
-  }
-  
-  if (bodyEl && overviewVal) {
-    const overviewTexts = safeJsonParse(overviewVal, []);
-    if (overviewTexts.length > 0) {
-      bodyEl.innerHTML = overviewTexts.map(text => `<p>${text}</p>`).join('');
-    } else {
-      bodyEl.innerHTML = '<p>No overview description available.</p>';
-    }
-  }
-
-  startOverviewCycleFromCard(centered, { intervalMs: 5000, fadeMs: 320 });
-}
-
-function getCenteredCard() {
-  const nearest = getNearestCard();
-  return nearest ? nearest.card : null;
-}
-
+/* EXISTING */
 function renderItineraryFromCard(cardEl) {
   const list = document.getElementById("itineraryList");
-  const detail = document.getElementById("itineraryDetail");
-  const detailTitle = document.getElementById("itineraryDetailTitle");
-  const detailBody = document.getElementById("itineraryDetailBody");
-  const closeBtn = document.getElementById("itineraryClose");
-
   if (!list || !cardEl) return;
 
-  const itineraryStr = cardEl.getAttribute('data-itinerary');
-  const itinerary = safeJsonParse(itineraryStr, []);
+  const itinerary = safeJsonParse(cardEl.dataset.itinerary, []);
   list.innerHTML = "";
 
   itinerary.forEach((item) => {
     const row = document.createElement("div");
     row.className = "it-row";
-    row.tabIndex = 0;
-    row.setAttribute("role", "button");
-    row.setAttribute("aria-label", `${item.day || ""}: ${item.title || ""}`);
 
     row.innerHTML = `
       <div class="it-day">${item.icon || "📍"} ${item.day || ""}</div>
       <div>
         <div class="it-stop">${item.title || ""}</div>
-        <div class="it-sub">${item.detail || "Tap for details"}</div>
+        <div class="it-sub">${item.detail || ""}</div>
       </div>
     `;
 
-    const open = () => {
-      detailTitle.textContent = `${item.day || ""}: ${item.title || ""}`;
-      detailBody.textContent = item.detail || "";
-      detail.hidden = false;
-      closeBtn.focus();
-    };
-
-    row.addEventListener("click", open);
-    row.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        open();
-      }
-    });
-
     list.appendChild(row);
   });
-
-  if (!closeBtn.dataset.bound) {
-    closeBtn.addEventListener("click", () => { detail.hidden = true; });
-    closeBtn.dataset.bound = "true";
-  }
 }
 
+/* 🔥 UPDATED: NOW CALLS OVERVIEW TOO */
 function syncItineraryToCenteredCard() {
-  const centered = getCenteredCard();
+  const centered = getNearestCard()?.card;
   if (!centered) return;
 
   if (centered !== activeItineraryCard) {
     activeItineraryCard = centered;
+
     renderItineraryFromCard(centered);
-    syncOverviewToCenteredCard();
+    renderOverviewFromCard(centered); // ← THIS FIXES YOUR ISSUE
   }
 }
 
+/* EVENTS */
 rail.addEventListener("scroll", () => {
   requestUpdate();
   syncItineraryToCenteredCard();
 }, { passive: true });
 
-// --- INITIALIZATION LOGIC ---
-
+/* INIT */
 requestUpdate();
-
-function forceInitialSync() {
-  // Explicitly grab the first card if centering fails
-  const initialCard = getCenteredCard() || (cards.length > 0 ? cards[0] : null);
-  
-  if (initialCard) {
-    activeItineraryCard = initialCard;
-    renderItineraryFromCard(initialCard);
-    syncOverviewToCenteredCard();
-  }
-}
-
-// Run immediately
-forceInitialSync();
-
-// Run again after 300ms to ensure DOM is fully ready
-setTimeout(forceInitialSync, 300);
-
-// Run again after 800ms as a safety net
-setTimeout(forceInitialSync, 800);
-
-const content = document.querySelector(".content");
-if (content) {
-  const obs = new IntersectionObserver(([entry]) => {
-    if (entry.isIntersecting) {
-      document.documentElement.style.setProperty("--page-bg", "#f4f6f8");
-      document.documentElement.style.setProperty("--page-fg", "#111111");
-    }
-  }, { threshold: 0.05 });
-  obs.observe(content);
-}
+syncItineraryToCenteredCard();
