@@ -274,7 +274,8 @@ function syncItineraryToCenteredCard() {
     activeItineraryCard = centered;
 
     renderItineraryFromCard(centered);
-    renderOverviewFromCard(centered); // ← THIS FIXES YOUR ISSUE
+    renderOverviewFromCard(centered);
+    syncOverviewToCenteredCard(); // ← THIS LINE FIXES IMAGES
   }
 }
 
@@ -287,3 +288,64 @@ rail.addEventListener("scroll", () => {
 /* INIT */
 requestUpdate();
 syncItineraryToCenteredCard();
+
+/* =========================
+   OVERVIEW PHOTO CYCLE (RESTORED)
+   ========================= */
+
+let overviewTimer = null;
+let activePhotosKey = "";
+
+function stopOverviewCycle() {
+  if (overviewTimer) {
+    clearInterval(overviewTimer);
+    overviewTimer = null;
+  }
+}
+
+function startOverviewCycleFromCard(cardEl, { intervalMs = 5000, fadeMs = 320 } = {}) {
+  const img = document.getElementById("overviewFrame");
+  if (!img || !cardEl) return;
+
+  const photos = safeJsonParse(cardEl.dataset.photos, []);
+  if (!Array.isArray(photos) || photos.length === 0) {
+    stopOverviewCycle();
+    return;
+  }
+
+  const key = photos.join("|");
+  if (key === activePhotosKey) return;
+  activePhotosKey = key;
+
+  stopOverviewCycle();
+
+  photos.forEach((src) => {
+    const pre = new Image();
+    pre.src = src;
+  });
+
+  let idx = 0;
+
+  const show = (i) => {
+    img.classList.add("is-fading");
+    setTimeout(() => {
+      img.src = photos[i];
+      img.classList.remove("is-fading");
+    }, fadeMs);
+  };
+
+  show(0);
+
+  if (photos.length > 1) {
+    overviewTimer = setInterval(() => {
+      idx = (idx + 1) % photos.length;
+      show(idx);
+    }, intervalMs);
+  }
+}
+
+function syncOverviewToCenteredCard() {
+  const centered = getNearestCard()?.card;
+  if (!centered) return;
+  startOverviewCycleFromCard(centered);
+}
