@@ -43,12 +43,11 @@ function animateScrollTo(targetLeft, duration = 340) {
     const eased = easeOutBack(t);
     rail.scrollLeft = startLeft + delta * eased;
 
-   if (t < 1) {
-  requestAnimationFrame(frame);
-} else {
-  syncItineraryToCenteredCard();
-}
-
+    if (t < 1) {
+      requestAnimationFrame(frame);
+    } else {
+      syncItineraryToCenteredCard();
+    }
   }
 
   requestAnimationFrame(frame);
@@ -354,6 +353,28 @@ function syncOverviewToCenteredCard() {
   const centered = getCenteredCard();
   if (!centered) return;
   startOverviewCycleFromCard(centered, { intervalMs: 5000, fadeMs: 320 });
+  
+  // Update text content for Title, Subtitle, and Body
+  const titleEl = document.getElementById('overviewTitle');
+  const subEl = document.getElementById('overviewSubtitle');
+  const bodyEl = document.getElementById('overviewBody');
+  
+  if (titleEl && centered.dataset.overviewTitle) {
+    titleEl.textContent = centered.dataset.overviewTitle;
+  }
+  
+  if (subEl && centered.dataset.overviewSubtitle) {
+    subEl.textContent = centered.dataset.overviewSubtitle;
+  }
+  
+  if (bodyEl && centered.dataset.overview) {
+    const overviewTexts = safeJsonParse(centered.dataset.overview, []);
+    if (overviewTexts.length > 0) {
+      bodyEl.innerHTML = overviewTexts.map(text => `<p>${text}</p>`).join('');
+    } else {
+      bodyEl.innerHTML = '<p>No overview description available.</p>';
+    }
+  }
 }
 
 function getCenteredCard() {
@@ -368,8 +389,8 @@ function renderItineraryFromCard(cardEl) {
   const detailBody = document.getElementById("itineraryDetailBody");
   const closeBtn = document.getElementById("itineraryClose");
 
-if (!list) return;
-if (!cardEl) return;
+  if (!list) return;
+  if (!cardEl) return;
 
   const itinerary = safeJsonParse(cardEl.dataset.itinerary, []);
   list.innerHTML = "";
@@ -420,11 +441,11 @@ function syncItineraryToCenteredCard() {
   const centered = getCenteredCard();
   if (!centered) return;
 
- if (centered !== activeItineraryCard) {
-  activeItineraryCard = centered;
-  renderItineraryFromCard(centered);
-  syncOverviewToCenteredCard();
-}
+  if (centered !== activeItineraryCard) {
+    activeItineraryCard = centered;
+    renderItineraryFromCard(centered);
+    syncOverviewToCenteredCard();
+  }
 }
 
 // Hook itinerary updates AFTER the functions exist
@@ -436,8 +457,28 @@ rail.addEventListener("scroll", () => {
 
 // Run once on load
 requestUpdate();
-syncItineraryToCenteredCard();
-syncOverviewToCenteredCard();
+
+// FIX: Ensure we initialize with the first card if centering fails
+const initialCard = getCenteredCard() || (cards.length > 0 ? cards[0] : null);
+
+if (initialCard) {
+  activeItineraryCard = initialCard;
+  renderItineraryFromCard(initialCard);
+  syncOverviewToCenteredCard();
+} else {
+  // Fallback if no cards found at all
+  console.warn("No cards found on the page.");
+}
+
+// Also try again after a short delay to catch any layout shifts from images
+setTimeout(() => {
+  const retryCard = getCenteredCard() || (cards.length > 0 ? cards[0] : null);
+  if (retryCard && retryCard !== activeItineraryCard) {
+    activeItineraryCard = retryCard;
+    renderItineraryFromCard(retryCard);
+    syncOverviewToCenteredCard();
+  }
+}, 150);
 
 const content = document.querySelector(".content");
 if (content) {
@@ -451,10 +492,3 @@ if (content) {
 
   obs.observe(content);
 }
-
-
-
-
-
-
-
